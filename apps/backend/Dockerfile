@@ -1,18 +1,12 @@
-FROM node:20-alpine AS base
+FROM node:20-alpine As base
 
-# Install dependencies only when needed
-FROM base AS deps
+FROM base As deps
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+COPY package*.json ./ 
 COPY packages/shared/package*.json ./packages/shared/
 COPY apps/backend/package*.json ./apps/backend/
-
-# Install dependencies
 RUN npm ci --only=production && npm cache clean --force
-
-# Build stage
 FROM base AS builder
 WORKDIR /app
 
@@ -30,8 +24,6 @@ RUN npm run build:shared
 
 # Build backend
 RUN npm run build:backend
-
-# Production stage
 FROM base AS runner
 WORKDIR /app
 
@@ -51,4 +43,4 @@ EXPOSE 3001
 
 ENV NODE_ENV=production
 
-CMD ["node", "dist/index.js"]
+CMD ["node", "dist/main.js"]

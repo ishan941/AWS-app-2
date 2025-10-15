@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   web:
@@ -38,7 +38,13 @@ services:
     networks:
       - aws-app-network
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/health"]
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "const http = require('http'); const req = http.request({ hostname: 'localhost', port: 3001, path: '/api/health', method: 'GET' }, (res) => { process.exit(res.statusCode === 200 ? 0 : 1); }); req.on('error', () => process.exit(1)); req.end();",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3

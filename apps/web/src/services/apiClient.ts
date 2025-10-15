@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios'
-import { ApiResponse, HealthResponse, HTTP_STATUS } from '@aws-app/shared'
+import { HealthResponse } from '@aws-app/shared'
 
 class ApiClient {
     private instance: AxiosInstance

@@ -1,0 +1,35 @@
+# Database Configuration
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=your_secure_password_here
+POSTGRES_DB=aws_app
+DATABASE_URL=postgresql://postgres:your_secure_password_here@localhost:5432/aws_app
+
+# Application Configuration
+NODE_ENV=production
+PORT=3001
+FRONTEND_URL=http://localhost:3000
+BACKEND_URL=http://localhost:3001
+
+# Security
+JWT_SECRET=your_jwt_secret_here_min_32_characters_long
+SESSION_SECRET=your_session_secret_here_min_32_characters_long
+
+# Redis Configuration
+REDIS_URL=redis://localhost:6379
+
+# AWS Configuration (if using AWS services)
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=your_access_key_id
+AWS_SECRET_ACCESS_KEY=your_secret_access_key
+
+# Email Configuration (optional)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your_email@gmail.com
+SMTP_PASS=your_app_password
+
+# API Keys (if needed)
+API_KEY=your_api_key_here
+
+# Docker Environment Variables
+COMPOSE_PROJECT_NAME=aws-app
