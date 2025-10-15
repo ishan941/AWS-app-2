@@ -19,6 +19,7 @@
         "test": "npm run test --workspaces --if-present",
         "test:web": "npm run test -w apps/web",
         "test:backend": "npm run test -w apps/backend",
+        "test:integration": "echo 'Running integration tests...' && curl -f http://backend-test:3001/api/health",
         "lint": "npm run lint --workspaces --if-present",
         "lint:fix": "npm run lint -- --fix --workspaces --if-present",
         "clean": "npm run clean --workspaces --if-present",

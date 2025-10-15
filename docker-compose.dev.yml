@@ -2,33 +2,29 @@ version: "3.8"
 
 services:
   web:
-    build:
-      context: .
-      dockerfile: apps/web/Dockerfile
+    image: aws-app-web:latest
     ports:
-      - "80:80"
+      - "3000:80"
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=development
     depends_on:
       backend:
         condition: service_healthy
     restart: unless-stopped
     networks:
-      - aws-app-network
+      - aws-app-dev-network
 
   backend:
-    build:
-      context: .
-      dockerfile: apps/backend/Dockerfile
+    image: aws-app-backend:latest
     ports:
       - "3001:3001"
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=development
       - PORT=3001
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-aws_app}
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-devpass}@postgres:5432/${POSTGRES_DB:-aws_app_dev}
       - REDIS_URL=redis://redis:6379
-      - JWT_SECRET=${JWT_SECRET}
-      - SESSION_SECRET=${SESSION_SECRET}
+      - JWT_SECRET=${JWT_SECRET:-dev-jwt-secret-32-characters-minimum}
+      - SESSION_SECRET=${SESSION_SECRET:-dev-session-secret-32-characters-min}
     depends_on:
       postgres:
         condition: service_healthy
@@ -36,7 +32,7 @@ services:
         condition: service_healthy
     restart: unless-stopped
     networks:
-      - aws-app-network
+      - aws-app-dev-network
     healthcheck:
       test:
         [
@@ -55,12 +51,12 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB:-aws_app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-devpass}
+      POSTGRES_DB: ${POSTGRES_DB:-aws_app_dev}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_dev_data:/var/lib/postgresql/data
     networks:
-      - aws-app-network
+      - aws-app-dev-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
       interval: 10s
@@ -71,42 +67,19 @@ services:
     image: redis:7-alpine
     restart: unless-stopped
     volumes:
-      - redis_data:/data
+      - redis_dev_data:/data
     networks:
-      - aws-app-network
+      - aws-app-dev-network
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 3
 
-  jenkins:
-    build:
-      context: ./jenkins
-      dockerfile: Dockerfile
-    ports:
-      - "8080:8080"
-      - "50000:50000"
-    environment:
-      - JENKINS_OPTS=--httpPort=8080
-      - JAVA_OPTS=-Djenkins.install.runSetupWizard=false
-    volumes:
-      - jenkins_home:/var/jenkins_home
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./:/workspace
-    networks:
-      - aws-app-network
-    restart: unless-stopped
-    user: root
-    depends_on:
-      - postgres
-      - redis
-
 volumes:
-  postgres_data:
-  redis_data:
-  jenkins_home:
+  postgres_dev_data:
+  redis_dev_data:
 
 networks:
-  aws-app-network:
+  aws-app-dev-network:
     driver: bridge

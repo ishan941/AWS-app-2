@@ -1,0 +1,7 @@
+# Essential Jenkins plugins
+git:latest
+workflow-aggregator:latest
+docker-workflow:latest
+nodejs:latest
+timestamper:latest
+ws-cleanup:latest

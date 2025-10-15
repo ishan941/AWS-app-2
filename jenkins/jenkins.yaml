@@ -1,0 +1,78 @@
+jenkins:
+  systemMessage: 'AWS App CI/CD Jenkins Server'
+  numExecutors: 4
+  mode: NORMAL
+
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: admin
+          password: ${JENKINS_ADMIN_PASSWORD:-admin123}
+
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+
+  globalNodeProperties:
+    - envVars:
+        env:
+          - key: 'DOCKER_HOST'
+            value: 'unix:///var/run/docker.sock'
+          - key: 'NODE_ENV'
+            value: 'production'
+
+tool:
+  nodejs:
+    installations:
+      - name: 'Node 20'
+        properties:
+          - installSource:
+              installers:
+                - nodeJSInstaller:
+                    id: '20.18.0'
+                    npmPackagesRefreshHours: 72
+
+  git:
+    installations:
+      - home: '/usr/bin/git'
+        name: 'Default'
+
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          - usernamePassword:
+              scope: GLOBAL
+              id: 'docker-hub'
+              username: '${DOCKER_HUB_USERNAME:-}'
+              password: '${DOCKER_HUB_PASSWORD:-}'
+              description: 'Docker Hub credentials'
+          - string:
+              scope: GLOBAL
+              id: 'aws-access-key'
+              secret: '${AWS_ACCESS_KEY_ID:-}'
+              description: 'AWS Access Key ID'
+          - string:
+              scope: GLOBAL
+              id: 'aws-secret-key'
+              secret: '${AWS_SECRET_ACCESS_KEY:-}'
+              description: 'AWS Secret Access Key'
+
+jobs:
+  - script: >
+      multibranchPipelineJob('aws-app-pipeline') {
+        branchSources {
+          github {
+            id('aws-app-repo')
+            scanCredentialsId('github-token')
+            repoOwner('ishan941')
+            repository('AWS-app-2')
+          }
+        }
+        orphanedItemStrategy {
+          discardOldItems {
+            numToKeep(20)
+          }
+        }
+      }

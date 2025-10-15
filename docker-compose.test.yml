@@ -1,0 +1,100 @@
+version: "3.8"
+
+services:
+  web-test:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    environment:
+      - NODE_ENV=test
+      - VITE_API_URL=http://backend-test:3001/api
+    depends_on:
+      - backend-test
+    networks:
+      - test-network
+
+  backend-test:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    environment:
+      - NODE_ENV=test
+      - PORT=3001
+      - DATABASE_URL=postgresql://postgres:testpass@postgres-test:5432/aws_app_test
+      - REDIS_URL=redis://redis-test:6379
+      - JWT_SECRET=test-jwt-secret-32-characters-min
+      - SESSION_SECRET=test-session-secret-32-chars-min
+    depends_on:
+      - postgres-test
+      - redis-test
+    networks:
+      - test-network
+    command: >
+      sh -c "
+        # Wait for database
+        until pg_isready -h postgres-test -p 5432 -U postgres; do
+          echo 'Waiting for database...'
+          sleep 2
+        done
+        
+        # Run database migrations/setup if needed
+        # npm run db:migrate
+        
+        # Start the application
+        npm start
+      "
+
+  postgres-test:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: testpass
+      POSTGRES_DB: aws_app_test
+    networks:
+      - test-network
+    tmpfs:
+      - /var/lib/postgresql/data
+
+  redis-test:
+    image: redis:7-alpine
+    networks:
+      - test-network
+    tmpfs:
+      - /data
+
+  test-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+    environment:
+      - NODE_ENV=test
+      - API_BASE_URL=http://backend-test:3001/api
+      - WEB_BASE_URL=http://web-test
+    depends_on:
+      - web-test
+      - backend-test
+    networks:
+      - test-network
+    command: >
+      sh -c "
+        # Wait for services to be ready
+        until curl -f http://backend-test:3001/api/health; do
+          echo 'Waiting for backend...'
+          sleep 5
+        done
+        
+        until curl -f http://web-test; do
+          echo 'Waiting for web...'
+          sleep 5
+        done
+        
+        # Run integration tests
+        npm run test:integration
+      "
+
+networks:
+  test-network:
+    driver: bridge
